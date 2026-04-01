@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Manan — Life OS Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=IBM+Plex+Mono:wght@300;400;500&display=swap" rel="stylesheet" />
+  <style>
+    /* =============================================
+       RESET & BASE
+    ============================================= */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:       #08080f;
+      --surface:  #0f0f1a;
+      --card:     #14141f;
+      --card-done:#0d1f18;
+      --border:   #1e1e30;
+      --accent:   #00e87a;
+      --accent2:  #7b5fff;
+      --accent3:  #ff6b35;
+      --text:     #dcdcf0;
+      --muted:    #52526e;
+      --mono:     'IBM Plex Mono', monospace;
+      --sans:     'Syne', sans-serif;
+      --radius:   10px;
+      --glow:     0 0 18px rgba(0, 232, 122, 0.18);
+      --glow2:    0 0 18px rgba(123, 95, 255, 0.18);
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--mono);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* Background grid texture */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(30,30,50,0.3) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(30,30,50,0.3) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* =============================================
+       HEADER
+    ============================================= */
+    header {
+      position: relative;
+      z-index: 10;
+      padding: 2.5rem 2rem 1.5rem;
+      border-bottom: 1px solid var(--border);
+      backdrop-filter: blur(10px);
+      background: rgba(8,8,15,0.85);
+    }
+
+    .header-inner {
+      max-width: 1400px;
+      margin: 0 auto;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: flex-end;
+      gap: 1.5rem;
+      justify-content: space-between;
+    }
+
+    .brand {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+
+    .brand-tag {
+      font-family: var(--mono);
+      font-size: 0.7rem;
+      color: var(--accent);
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+    }
+
+    .brand-title {
+      font-family: var(--sans);
+      font-size: clamp(1.8rem, 4vw, 2.8rem);
+      font-weight: 800;
+      line-height: 1;
+      background: linear-gradient(120deg, #ffffff 0%, var(--accent) 60%, var(--accent2) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .brand-sub {
+      font-size: 0.72rem;
+      color: var(--muted);
+      letter-spacing: 0.05em;
+    }
+
+    /* Stats row */
+    .stats-row {
+      display: flex;
+      gap: 1.2rem;
+      flex-wrap: wrap;
+    }
+
+    .stat-pill {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 50px;
+      padding: 0.45rem 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.55rem;
+      font-size: 0.72rem;
+      transition: border-color 0.2s;
+    }
+
+    .stat-pill .dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .stat-pill .dot.green  { background: var(--accent); box-shadow: 0 0 6px var(--accent); }
+    .stat-pill .dot.purple { background: var(--accent2); box-shadow: 0 0 6px var(--accent2); }
+    .stat-pill .dot.orange { background: var(--accent3); box-shadow: 0 0 6px var(--accent3); }
+
+    .stat-pill span.val {
+      font-weight: 500;
+      color: #fff;
+    }
+
+    /* Progress bar */
+    .progress-wrap {
+      max-width: 1400px;
+      margin: 1.2rem auto 0;
+      padding: 0 2rem;
+    }
+
+    .progress-meta {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.65rem;
+      color: var(--muted);
+      margin-bottom: 0.4rem;
+    }
+
+    .progress-bar-track {
+      height: 3px;
+      background: var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      border-radius: 10px;
+      transition: width 0.6s cubic-bezier(0.34,1.56,0.64,1);
+    }
+
+    /* =============================================
+       CONTROLS TOOLBAR
+    ============================================= */
+    .toolbar {
+      position: relative;
+      z-index: 10;
+      max-width: 1400px;
+      margin: 1.8rem auto 0;
+      padding: 0 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .filter-tabs {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .tab {
+      padding: 0.4rem 0.9rem;
+      border: 1px solid var(--border);
+      border-radius: 50px;
+      background: transparent;
+      color: var(--muted);
+      font-family: var(--mono);
+      font-size: 0.7rem;
+      cursor: pointer;
+      letter-spacing: 0.05em;
+      transition: all 0.2s;
+    }
+
+    .tab:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .tab.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #000;
+      font-weight: 500;
+    }
+
+    .toolbar-right {
+      display: flex;
+      gap: 0.7rem;
+      align-items: center;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      padding: 0.5rem 1.1rem;
+      border-radius: var(--radius);
+      font-family: var(--mono);
+      font-size: 0.7rem;
+      font-weight: 500;
+      letter-spacing: 0.05em;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.2s;
+      border: 1px solid transparent;
+    }
+
+    .btn-ghost {
+      background: var(--surface);
+      border-color: var(--border);
+      color: var(--text);
+    }
+
+    .btn-ghost:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      box-shadow: var(--glow);
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #000;
+    }
+
+    .btn-primary:hover {
+      background: #00ff88;
+      box-shadow: 0 0 20px rgba(0,232,122,0.4);
+      transform: translateY(-1px);
+    }
+
+    .btn-danger {
+      background: transparent;
+      border-color: #ff4444;
+      color: #ff4444;
+    }
+
+    .btn-danger:hover {
+      background: rgba(255,68,68,0.1);
+    }
+
+    /* =============================================
+       GRID SECTION
+    ============================================= */
+    .section {
+      position: relative;
+      z-index: 5;
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 2rem 2rem 4rem;
+    }
+
+    .category-label {
+      font-family: var(--sans);
+      font-size: 0.65rem;
+      font-weight: 700;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin: 2.5rem 0 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+    }
+
+    .category-label::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    .skills-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+      gap: 0.8rem;
+    }
+
+    /* =============================================
+       SKILL CARD
+    ============================================= */
+    .skill-card {
+      position: relative;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.1rem 1rem 0.9rem;
+      cursor: pointer;
+      transition:
+        transform 0.18s ease,
+        border-color 0.18s ease,
+        background 0.25s ease,
+        box-shadow 0.18s ease;
+      overflow: hidden;
+      user-select: none;
+    }
+
+    .skill-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      background: linear-gradient(135deg, rgba(0,232,122,0.06) 0%, transparent 60%);
+      transition: opacity 0.25s;
+    }
+
+    .skill-card:hover {
+      transform: translateY(-3px);
+      border-color: rgba(0,232,122,0.35);
+      box-shadow: 0 8px 30px rgba(0,0,0,0.4), var(--glow);
+    }
+
+    .skill-card:hover::before { opacity: 1; }
+
+    .skill-card.done {
+      background: var(--card-done);
+      border-color: rgba(0,232,122,0.45);
+      box-shadow: 0 0 0 1px rgba(0,232,122,0.15) inset;
+    }
+
+    .skill-card.done::before { opacity: 1; }
+
+    .skill-card.done .skill-name { color: var(--accent); }
+
+    .skill-card .card-icon {
+      font-size: 1.4rem;
+      margin-bottom: 0.55rem;
+      display: block;
+      transition: transform 0.2s;
+    }
+
+    .skill-card:hover .card-icon { transform: scale(1.1); }
+
+    .skill-name {
+      font-family: var(--sans);
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--text);
+      line-height: 1.3;
+      transition: color 0.2s;
+    }
+
+    .skill-cat {
+      font-size: 0.6rem;
+      color: var(--muted);
+      margin-top: 0.3rem;
+      letter-spacing: 0.08em;
+    }
+
+    /* Checkmark badge */
+    .check-badge {
+      position: absolute;
+      top: 0.6rem;
+      right: 0.6rem;
+      width: 18px; height: 18px;
+      border-radius: 50%;
+      background: var(--accent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transform: scale(0);
+      transition: all 0.25s cubic-bezier(0.34,1.56,0.64,1);
+    }
+
+    .check-badge svg { width: 10px; height: 10px; fill: #000; }
+    .skill-card.done .check-badge { opacity: 1; transform: scale(1); }
+
+    /* Glow line bottom */
+    .skill-card .card-glow {
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 2px;
+      background: var(--accent);
+      transform: scaleX(0);
+      transform-origin: left;
+      transition: transform 0.3s ease;
+    }
+
+    .skill-card.done .card-glow { transform: scaleX(1); }
+    .skill-card:hover .card-glow { transform: scaleX(0.4); }
+    .skill-card.done:hover .card-glow { transform: scaleX(1); }
+
+    /* =============================================
+       EMPTY STATE
+    ============================================= */
+    .empty-state {
+      text-align: center;
+      padding: 4rem 2rem;
+      color: var(--muted);
+      font-size: 0.8rem;
+    }
+
+    /* =============================================
+       FLOATING TOAST
+    ============================================= */
+    #toast {
+      position: fixed;
+      bottom: 2rem;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: var(--surface);
+      border: 1px solid var(--accent);
+      color: var(--accent);
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      padding: 0.6rem 1.4rem;
+      border-radius: 50px;
+      z-index: 999;
+      transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
+      white-space: nowrap;
+      box-shadow: var(--glow);
+      pointer-events: none;
+    }
+
+    #toast.show { transform: translateX(-50%) translateY(0); }
+
+    /* =============================================
+       RESPONSIVE
+    ============================================= */
+    @media (max-width: 600px) {
+      header { padding: 1.5rem 1rem 1rem; }
+      .header-inner { gap: 1rem; }
+      .toolbar { padding: 0 1rem; }
+      .section { padding: 1rem 1rem 3rem; }
+      .skills-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 0.65rem; }
+      .progress-wrap { padding: 0 1rem; }
+    }
+
+    /* Scan line animation for done cards */
+    @keyframes scanline {
+      0%   { transform: translateY(-100%); }
+      100% { transform: translateY(400%); }
+    }
+
+    .skill-card.done .scanline-effect {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      overflow: hidden;
+    }
+
+    .skill-card.done .scanline-effect::after {
+      content: '';
+      position: absolute;
+      left: 0; right: 0;
+      height: 30%;
+      background: linear-gradient(to bottom, transparent, rgba(0,232,122,0.04), transparent);
+      animation: scanline 3s linear infinite;
+    }
+
+    /* Category color variants */
+    .skill-card[data-cat="tech"]:hover         { border-color: rgba(0,232,122,0.4); }
+    .skill-card[data-cat="health"]:hover        { border-color: rgba(255,107,53,0.4); }
+    .skill-card[data-cat="health"] .card-glow   { background: var(--accent3); }
+    .skill-card[data-cat="health"].done         { border-color: rgba(255,107,53,0.45); box-shadow: 0 0 0 1px rgba(255,107,53,0.15) inset; }
+    .skill-card[data-cat="health"].done .skill-name { color: var(--accent3); }
+    .skill-card[data-cat="health"].done .check-badge { background: var(--accent3); }
+
+    .skill-card[data-cat="mind"]:hover          { border-color: rgba(123,95,255,0.4); }
+    .skill-card[data-cat="mind"] .card-glow     { background: var(--accent2); }
+    .skill-card[data-cat="mind"].done           { border-color: rgba(123,95,255,0.45); box-shadow: 0 0 0 1px rgba(123,95,255,0.15) inset; }
+    .skill-card[data-cat="mind"].done .skill-name { color: var(--accent2); }
+    .skill-card[data-cat="mind"].done .check-badge { background: var(--accent2); }
+
+    .skill-card[data-cat="creative"]:hover      { border-color: rgba(255,214,0,0.4); }
+    .skill-card[data-cat="creative"] .card-glow { background: #ffd600; }
+    .skill-card[data-cat="creative"].done       { border-color: rgba(255,214,0,0.45); box-shadow: 0 0 0 1px rgba(255,214,0,0.15) inset; }
+    .skill-card[data-cat="creative"].done .skill-name { color: #ffd600; }
+    .skill-card[data-cat="creative"].done .check-badge { background: #ffd600; }
+
+    .skill-card[data-cat="language"]:hover      { border-color: rgba(0,188,255,0.4); }
+    .skill-card[data-cat="language"] .card-glow { background: #00bcff; }
+    .skill-card[data-cat="language"].done       { border-color: rgba(0,188,255,0.45); box-shadow: 0 0 0 1px rgba(0,188,255,0.15) inset; }
+    .skill-card[data-cat="language"].done .skill-name { color: #00bcff; }
+    .skill-card[data-cat="language"].done .check-badge { background: #00bcff; }
+  </style>
+</head>
+<body>
+
+<!-- =============================================
+     HEADER
+============================================= -->
+<header>
+  <div class="header-inner">
+    <div class="brand">
+      <span class="brand-tag">// life_os v2026.04</span>
+      <h1 class="brand-title">Manan's Growth OS</h1>
+      <p class="brand-sub">personal mastery dashboard — tracking <span id="total-count">0</span> skills across 2026</p>
+    </div>
+    <div class="stats-row">
+      <div class="stat-pill">
+        <span class="dot green"></span>
+        <span class="val" id="done-count">0</span> mastered
+      </div>
+      <div class="stat-pill">
+        <span class="dot purple"></span>
+        <span class="val" id="pct-count">0%</span> complete
+      </div>
+      <div class="stat-pill">
+        <span class="dot orange"></span>
+        <span class="val" id="remain-count">0</span> remaining
+      </div>
+    </div>
+  </div>
+  <div class="progress-wrap">
+    <div class="progress-meta">
+      <span>// overall mastery progress</span>
+      <span id="progress-label">0 / 0</span>
+    </div>
+    <div class="progress-bar-track">
+      <div class="progress-bar-fill" id="progress-bar" style="width:0%"></div>
+    </div>
+  </div>
+</header>
+
+<!-- =============================================
+     TOOLBAR
+============================================= -->
+<div class="toolbar">
+  <div class="filter-tabs" id="filter-tabs">
+    <button class="tab active" data-filter="all">All</button>
+    <button class="tab" data-filter="tech">⚡ Tech</button>
+    <button class="tab" data-filter="health">🏃 Health</button>
+    <button class="tab" data-filter="mind">🧠 Mind</button>
+    <button class="tab" data-filter="creative">🎨 Creative</button>
+    <button class="tab" data-filter="language">🌍 Language</button>
+  </div>
+  <div class="toolbar-right">
+    <button class="btn btn-danger" id="reset-btn">↺ reset all</button>
+    <a href="history.html" class="btn btn-primary">📅 daily journal →</a>
+  </div>
+</div>
+
+<!-- =============================================
+     SKILLS GRID
+============================================= -->
+<main class="section" id="skills-container"></main>
+
+<!-- Toast -->
+<div id="toast"></div>
+
+<!-- =============================================
+     JAVASCRIPT
+============================================= -->
+<script>
+  // ============================================================
+  // SKILLS DATA — edit this array to add/remove/rename skills
+  // Format: { name, icon, cat }
+  // cat options: "tech" | "health" | "mind" | "creative" | "language"
+  // ============================================================
+  const SKILLS = [
+    // --- TECH ---
+    { name: "Python",                    icon: "🐍", cat: "tech" },
+    { name: "C++",                       icon: "⚙️", cat: "tech" },
+    { name: "Data Structures & Algorithms", icon: "🌲", cat: "tech" },
+    { name: "Git",                       icon: "🔀", cat: "tech" },
+    { name: "GitHub",                    icon: "🐙", cat: "tech" },
+    { name: "Linux",                     icon: "🐧", cat: "tech" },
+    { name: "Bash Scripting",            icon: "💻", cat: "tech" },
+    { name: "HTML",                      icon: "🏗️", cat: "tech" },
+    { name: "CSS",                       icon: "🎨", cat: "tech" },
+    { name: "JavaScript",                icon: "✨", cat: "tech" },
+    { name: "SQL",                       icon: "🗃️", cat: "tech" },
+    { name: "PHP",                       icon: "🐘", cat: "tech" },
+    { name: "Cybersecurity",             icon: "🔐", cat: "tech" },
+    { name: "Machine Learning",          icon: "🤖", cat: "tech" },
+    { name: "Data Science",              icon: "📊", cat: "tech" },
+    { name: "Operating Systems Fundamentals", icon: "🖥️", cat: "tech" },
+    { name: "Quickshell",                icon: "🔲", cat: "tech" },
+    { name: "PyTorch",                   icon: "🔥", cat: "tech" },
+    { name: "NumPy",                     icon: "🔢", cat: "tech" },
+    { name: "Tkinter",                   icon: "🪟", cat: "tech" },
+    { name: "Neural Networks",           icon: "🧬", cat: "tech" },
+    { name: "Game Development",          icon: "🎮", cat: "tech" },
+    { name: "Linux Ricing",              icon: "🌸", cat: "tech" },
+
+    // --- HEALTH ---
+    { name: "Body Posture",              icon: "🧍", cat: "health" },
+    { name: "Physique Development",      icon: "💪", cat: "health" },
+    { name: "Sleep Optimization",        icon: "😴", cat: "health" },
+    { name: "Skincare",                  icon: "✨", cat: "health" },
+    { name: "Haircare",                  icon: "💈", cat: "health" },
+    { name: "Dental Care",               icon: "🦷", cat: "health" },
+    { name: "Facial Symmetry Improvement", icon: "👤", cat: "health" },
+    { name: "Stamina Building",          icon: "❤️", cat: "health" },
+    { name: "Breathing Techniques",      icon: "🌬️", cat: "health" },
+    { name: "Calisthenics",              icon: "🤸", cat: "health" },
+    { name: "Flexibility Training",      icon: "🧘", cat: "health" },
+    { name: "Sprinting (5km goal)",      icon: "🏃", cat: "health" },
+    { name: "Backflip",                  icon: "🔄", cat: "health" },
+    { name: "Managing Allergies",        icon: "🌿", cat: "health" },
+    { name: "Reaction Time Improvement", icon: "⚡", cat: "health" },
+
+    // --- MIND ---
+    { name: "English Speaking",          icon: "🎤", cat: "mind" },
+    { name: "Public Speaking",           icon: "📢", cat: "mind" },
+    { name: "Storytelling",              icon: "📖", cat: "mind" },
+    { name: "Body Language",             icon: "🤝", cat: "mind" },
+    { name: "Communication Skills",      icon: "💬", cat: "mind" },
+    { name: "Deep Voice Development",    icon: "🎙️", cat: "mind" },
+    { name: "Financial Literacy",        icon: "💰", cat: "mind" },
+    { name: "Time Management",           icon: "⏰", cat: "mind" },
+    { name: "Memory Improvement",        icon: "🧠", cat: "mind" },
+    { name: "Focus & Concentration",     icon: "🎯", cat: "mind" },
+    { name: "Problem Solving",           icon: "🧩", cat: "mind" },
+    { name: "Psychology",                icon: "🔍", cat: "mind" },
+    { name: "Physics",                   icon: "⚛️", cat: "mind" },
+    { name: "Mathematics",               icon: "∑", cat: "mind" },
+    { name: "Reading 10 Books",          icon: "📚", cat: "mind" },
+    { name: "Chess (1500 ELO)",          icon: "♟️", cat: "mind" },
+    { name: "Speed Typing",              icon: "⌨️", cat: "mind" },
+
+    // --- CREATIVE ---
+    { name: "3D Modeling",               icon: "🗿", cat: "creative" },
+    { name: "Content Creation",          icon: "📹", cat: "creative" },
+    { name: "Photo Editing",             icon: "🖼️", cat: "creative" },
+    { name: "Graphic Design",            icon: "✏️", cat: "creative" },
+    { name: "UI/UX Design",              icon: "🖱️", cat: "creative" },
+    { name: "Singing",                   icon: "🎵", cat: "creative" },
+
+    // --- LANGUAGE ---
+    { name: "Spanish",                   icon: "🇪🇸", cat: "language" },
+    { name: "Samskritam",                icon: "🕉️", cat: "language" },
+    { name: "Indian Sign Language (Basics)", icon: "🤟", cat: "language" },
+  ];
+
+  // ============================================================
+  // CATEGORIES CONFIG
+  // ============================================================
+  const CATEGORIES = {
+    tech:     { label: "Technology & Programming", color: "#00e87a" },
+    health:   { label: "Health & Physical Training", color: "#ff6b35" },
+    mind:     { label: "Mind, Communication & Learning", color: "#7b5fff" },
+    creative: { label: "Creative & Arts", color: "#ffd600" },
+    language: { label: "Languages", color: "#00bcff" },
+  };
+
+  // ============================================================
+  // STATE
+  // ============================================================
+  const STORAGE_KEY = 'manan_skills_v1';
+  let doneSet = new Set(JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'));
+  let activeFilter = 'all';
+
+  // ============================================================
+  // RENDER
+  // ============================================================
+  function render() {
+    const container = document.getElementById('skills-container');
+    container.innerHTML = '';
+
+    const filtered = activeFilter === 'all'
+      ? SKILLS
+      : SKILLS.filter(s => s.cat === activeFilter);
+
+    if (filtered.length === 0) {
+      container.innerHTML = '<div class="empty-state">no skills found in this category.</div>';
+      return;
+    }
+
+    // Group by category
+    const groups = {};
+    filtered.forEach(s => {
+      if (!groups[s.cat]) groups[s.cat] = [];
+      groups[s.cat].push(s);
+    });
+
+    Object.entries(groups).forEach(([cat, skills]) => {
+      // Category heading
+      const heading = document.createElement('div');
+      heading.className = 'category-label';
+      heading.style.color = CATEGORIES[cat].color;
+      heading.textContent = CATEGORIES[cat].label;
+      container.appendChild(heading);
+
+      // Grid
+      const grid = document.createElement('div');
+      grid.className = 'skills-grid';
+
+      skills.forEach(skill => {
+        const id = skillId(skill);
+        const done = doneSet.has(id);
+
+        const card = document.createElement('div');
+        card.className = 'skill-card' + (done ? ' done' : '');
+        card.dataset.cat = skill.cat;
+        card.setAttribute('role', 'button');
+        card.setAttribute('tabindex', '0');
+        card.setAttribute('aria-pressed', done ? 'true' : 'false');
+        card.setAttribute('title', done ? `${skill.name} — completed ✓` : skill.name);
+
+        card.innerHTML = `
+          <div class="scanline-effect"></div>
+          <span class="card-icon">${skill.icon}</span>
+          <div class="skill-name">${skill.name}</div>
+          <div class="skill-cat">${CATEGORIES[skill.cat].label.split(' ')[0].toLowerCase()}</div>
+          <div class="check-badge">
+            <svg viewBox="0 0 12 12"><polyline points="1,6 4,9 11,3" fill="none" stroke="#000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          <div class="card-glow"></div>
+        `;
+
+        card.addEventListener('click', () => toggleSkill(skill, card, id));
+        card.addEventListener('keydown', e => {
+          if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleSkill(skill, card, id); }
+        });
+
+        grid.appendChild(card);
+      });
+
+      container.appendChild(grid);
+    });
+
+    updateStats();
+  }
+
+  function skillId(skill) {
+    return skill.name.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
+  }
+
+  function toggleSkill(skill, card, id) {
+    if (doneSet.has(id)) {
+      doneSet.delete(id);
+      card.classList.remove('done');
+      card.setAttribute('aria-pressed', 'false');
+      showToast(`↩ ${skill.name} unmarked`);
+    } else {
+      doneSet.add(id);
+      card.classList.add('done');
+      card.setAttribute('aria-pressed', 'true');
+      showToast(`✓ ${skill.name} marked as mastered`);
+    }
+    save();
+    updateStats();
+  }
+
+  function save() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify([...doneSet]));
+  }
+
+  function updateStats() {
+    const total  = SKILLS.length;
+    const done   = SKILLS.filter(s => doneSet.has(skillId(s))).length;
+    const pct    = total ? Math.round(done / total * 100) : 0;
+
+    document.getElementById('total-count').textContent   = total;
+    document.getElementById('done-count').textContent    = done;
+    document.getElementById('remain-count').textContent  = total - done;
+    document.getElementById('pct-count').textContent     = pct + '%';
+    document.getElementById('progress-label').textContent = `${done} / ${total}`;
+    document.getElementById('progress-bar').style.width  = pct + '%';
+  }
+
+  // ============================================================
+  // FILTER TABS
+  // ============================================================
+  document.getElementById('filter-tabs').addEventListener('click', e => {
+    const tab = e.target.closest('.tab');
+    if (!tab) return;
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    activeFilter = tab.dataset.filter;
+    render();
+  });
+
+  // ============================================================
+  // RESET
+  // ============================================================
+  document.getElementById('reset-btn').addEventListener('click', () => {
+    if (!confirm('Reset all progress? This cannot be undone.')) return;
+    doneSet.clear();
+    save();
+    render();
+    showToast('↺ all progress reset');
+  });
+
+  // ============================================================
+  // TOAST
+  // ============================================================
+  let toastTimer;
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove('show'), 2200);
+  }
+
+  // ============================================================
+  // INIT
+  // ============================================================
+  render();
+</script>
+</body>
+</html>
